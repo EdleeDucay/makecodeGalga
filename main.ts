@@ -2,13 +2,43 @@ namespace SpriteKind {
     export const Health = SpriteKind.create()
     export const Powerup = SpriteKind.create()
 }
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Powerup, function (sprite, otherSprite) {
-    otherSprite.destroy(effects.smiles, 500)
-    music.beamUp.play()
-    powerupOn = 1
-    pause(10000)
-    powerupOn = 0
-})
+
+let bogey: Sprite = null
+let heart: Sprite = null
+let drop = 0
+let dart: Sprite = null
+let lemon: Sprite = null
+let burger: Sprite = null
+let powerupOn = 0
+let currentPowerup = 0
+
+// Player Init 
+let spacePlane: Sprite = null
+spacePlane = sprites.create(img`
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . 4 4 4 4 4 4 . . . . . 
+    . . . 4 4 4 5 4 4 7 7 4 . . . . 
+    . 4 4 4 5 5 5 4 2 2 2 4 4 . . . 
+    . 4 f f f f f 4 4 4 2 2 2 4 4 . 
+    . . 4 4 5 5 5 4 4 4 f f f f . . 
+    . . . . 4 4 4 4 4 f f f . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    `, SpriteKind.Player)
+spacePlane.setStayInScreen(true)
+info.setLife(3)
+controller.moveSprite(spacePlane, 100, 100)
+currentPowerup = 0
+powerupOn = 0
+
+// Fire on A pressed
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     dart = sprites.createProjectileFromSprite(img`
         . . . . . . . . . . . . . . . . 
@@ -107,9 +137,19 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
             . . . . . . . . . . . . . . . . 
             . . . . . . . . . . . . . . . . 
             `, spacePlane, 200, 0)
-    } else {
-    	
+    } 
+})
+
+// Overlaps
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Powerup, function (sprite, otherSprite) {
+    otherSprite.destroy(effects.smiles, 500)
+    music.beamUp.play()
+    if (burger == otherSprite) {
+        currentPowerup = 1
+    } else if (lemon == otherSprite) {
+        currentPowerup = 2
     }
+    powerupOn = 1
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Health, function (sprite, otherSprite) {
     otherSprite.destroy(effects.hearts, 500)
@@ -127,40 +167,12 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSp
     sprite.startEffect(effects.ashes, 500)
     info.changeLifeBy(-1)
     scene.cameraShake(4, 500)
+    currentPowerup = 0
+    powerupOn = 0
     music.bigCrash.play()
 })
-let bogey: Sprite = null
-let lemon: Sprite = null
-let burger: Sprite = null
-let heart: Sprite = null
-let drop = 0
-let dart: Sprite = null
-let powerupOn = 0
-let currentPowerup = 0
-let spacePlane: Sprite = null
-spacePlane = sprites.create(img`
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . 4 4 4 4 4 4 . . . . . 
-    . . . 4 4 4 5 4 4 7 7 4 . . . . 
-    . 4 4 4 5 5 5 4 2 2 2 4 4 . . . 
-    . 4 f f f f f 4 4 4 2 2 2 4 4 . 
-    . . 4 4 5 5 5 4 4 4 f f f f . . 
-    . . . . 4 4 4 4 4 f f f . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    . . . . . . . . . . . . . . . . 
-    `, SpriteKind.Player)
-spacePlane.setStayInScreen(true)
-info.setLife(3)
-controller.moveSprite(spacePlane, 100, 100)
-currentPowerup = 0
-powerupOn = 0
+
+// Power Up Spawner
 game.onUpdateInterval(5000, function () {
     drop = randint(0, 2)
     if (drop == 0) {
@@ -266,7 +278,6 @@ game.onUpdateInterval(5000, function () {
         burger.left = scene.screenWidth()
         burger.y = randint(0, scene.screenHeight())
         burger.setFlag(SpriteFlag.AutoDestroy, true)
-        currentPowerup = 1
     } else if (drop == 2) {
         lemon = sprites.create(img`
             4 4 4 . . 4 4 4 4 4 . . . . . . 
@@ -290,11 +301,12 @@ game.onUpdateInterval(5000, function () {
         lemon.left = scene.screenWidth()
         lemon.y = randint(0, scene.screenHeight())
         lemon.setFlag(SpriteFlag.AutoDestroy, true)
-        currentPowerup = 2
     } else {
     	
     }
 })
+
+// Enemy Spawner
 game.onUpdateInterval(500, function () {
     if (randint(0, 4) == 0) {
         bogey = sprites.create(img`
